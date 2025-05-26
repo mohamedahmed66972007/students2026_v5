@@ -62,11 +62,14 @@ function TimePicker({ value, onChange, placeholder }: { value: string; onChange:
   };
 
   const handlePeriodSelect = (selectedPeriod: string) => {
-    setPeriod(selectedPeriod);
-    // Use the selected period directly instead of relying on state
+    // Extract AM/PM from the Arabic text
+    const actualPeriod = selectedPeriod.includes('AM') ? 'AM' : 'PM';
+    setPeriod(actualPeriod);
+    
+    // Use the extracted period for calculation
     let hour24 = parseInt(hours);
-    if (selectedPeriod === 'PM' && hour24 !== 12) hour24 += 12;
-    if (selectedPeriod === 'AM' && hour24 === 12) hour24 = 0;
+    if (actualPeriod === 'PM' && hour24 !== 12) hour24 += 12;
+    if (actualPeriod === 'AM' && hour24 === 12) hour24 = 0;
     
     const timeValue = `${hour24.toString().padStart(2, '0')}:${minutes.padStart(2, '0')}`;
     onChange(timeValue);
@@ -158,7 +161,7 @@ function TimePicker({ value, onChange, placeholder }: { value: string; onChange:
                     onClick={() => handlePeriodSelect(p)}
                     className={cn(
                       "p-3 text-center hover:bg-accent transition-colors border rounded-md",
-                      period === p && "bg-primary text-primary-foreground"
+                      (period === 'AM' && p.includes('AM')) || (period === 'PM' && p.includes('PM')) ? "bg-primary text-primary-foreground" : ""
                     )}
                   >
                     {p}
