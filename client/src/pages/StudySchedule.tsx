@@ -28,6 +28,8 @@ export default function StudySchedule() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [importSchedule, setImportSchedule] = useState<any>(null);
   const [showImportModal, setShowImportModal] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareUrl, setShareUrl] = useState("");
   const { toast } = useToast();
 
   // Load sessions from localStorage
@@ -591,18 +593,24 @@ export default function StudySchedule() {
 
     // Encode the schedule data
     const encodedSchedule = btoa(JSON.stringify(shareableSchedule));
-    const shareUrl = `${window.location.origin}/study-schedule?import=${encodedSchedule}`;
+    const generatedShareUrl = `${window.location.origin}/study-schedule?import=${encodedSchedule}`;
+    
+    setShareUrl(generatedShareUrl);
+    setShowShareModal(true);
+  };
 
+  const copyShareUrl = () => {
     navigator.clipboard.writeText(shareUrl).then(() => {
       toast({
-        title: "تم إنشاء الرابط",
+        title: "تم نسخ الرابط",
         description: "تم نسخ رابط المشاركة إلى الحافظة",
         duration: 3000,
       });
+      setShowShareModal(false);
     }).catch(() => {
       toast({
-        title: "خطأ في إنشاء الرابط",
-        description: "حدث خطأ أثناء إنشاء رابط المشاركة",
+        title: "خطأ في النسخ",
+        description: "حدث خطأ أثناء نسخ الرابط",
         variant: "destructive",
         duration: 3000,
       });
@@ -809,6 +817,47 @@ export default function StudySchedule() {
           onClose={() => setEditingSession(null)}
           onUpdate={updateSession}
         />
+      )}
+
+      {/* Share Schedule Modal */}
+      {showShareModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-lg w-full">
+            <div className="p-6">
+              <h2 className="text-xl font-bold mb-4 text-center">مشاركة جدول المذاكرة</h2>
+              <p className="text-gray-600 dark:text-gray-300 mb-4 text-center">
+                يمكنك مشاركة هذا الرابط مع الآخرين لإضافة جدولك إلى جدولهم
+              </p>
+              
+              <div className="bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg p-4 mb-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex-1 text-sm break-all overflow-hidden">
+                    {shareUrl}
+                  </div>
+                  <Button
+                    onClick={copyShareUrl}
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-2 whitespace-nowrap"
+                  >
+                    <Copy className="h-4 w-4" />
+                    نسخ
+                  </Button>
+                </div>
+              </div>
+
+              <div className="flex gap-2 justify-center">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowShareModal(false)}
+                  className="flex-1"
+                >
+                  إغلاق
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Import Schedule Modal */}
