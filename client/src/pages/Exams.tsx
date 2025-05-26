@@ -102,57 +102,56 @@ const Exams: React.FC = () => {
       // Create HTML content
       let htmlContent = themeStyles;
 
-      // Add exam weeks and their exams
-      examWeeks.forEach(week => {
-        const weekExams = exams?.filter(exam => exam.weekId === week.id) || [];
-        
-        if (weekExams.length > 0) {
-          htmlContent += `
-            <table class="main-table">
-              <thead>
-                <tr>
-                  <th class="table-header" style="width: 25%;">المادة</th>
-                  <th class="table-header" style="width: 15%;">اليوم</th>
-                  <th class="table-header" style="width: 20%;">التاريخ</th>
-                  <th class="table-header" style="width: 40%;">الدروس المقررة</th>
-                </tr>
-              </thead>
-              <tbody>
-          `;
-          
-          weekExams.forEach(exam => {
-            htmlContent += `
+      // Get all exams and sort them by date
+      const allExams = exams || [];
+      const sortedExams = allExams.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+      if (sortedExams.length > 0) {
+        htmlContent += `
+          <table class="main-table">
+            <thead>
               <tr>
-                <td class="table-cell">
-                  <div class="subject-name">
-                    ${getSubjectName(exam.subject)}
-                  </div>
-                </td>
-                <td class="table-cell" style="text-align: center;">
-                  ${exam.day}
-                </td>
-                <td class="table-cell" style="text-align: center;">
-                  ${dayjs(exam.date).format("DD/MM/YYYY")}
-                </td>
-                <td class="table-cell">
-                  <div class="lessons-list">
-                    ${exam.topics.map(topic => `
-                      <div class="lesson-item">
-                        <span style="color: #000000;">●</span> ${topic}
-                      </div>
-                    `).join('')}
-                  </div>
-                </td>
+                <th class="table-header" style="width: 25%;">المادة</th>
+                <th class="table-header" style="width: 15%;">اليوم</th>
+                <th class="table-header" style="width: 20%;">التاريخ</th>
+                <th class="table-header" style="width: 40%;">الدروس المقررة</th>
               </tr>
-            `;
-          });
-          
+            </thead>
+            <tbody>
+        `;
+        
+        sortedExams.forEach(exam => {
           htmlContent += `
-              </tbody>
-            </table>
+            <tr>
+              <td class="table-cell">
+                <div class="subject-name">
+                  ${getSubjectName(exam.subject)}
+                </div>
+              </td>
+              <td class="table-cell" style="text-align: center;">
+                ${exam.day}
+              </td>
+              <td class="table-cell" style="text-align: center;">
+                ${dayjs(exam.date).format("DD/MM/YYYY")}
+              </td>
+              <td class="table-cell">
+                <div class="lessons-list">
+                  ${exam.topics.map(topic => `
+                    <div class="lesson-item">
+                      <span style="color: #000000;">●</span> ${topic}
+                    </div>
+                  `).join('')}
+                </div>
+              </td>
+            </tr>
           `;
-        }
-      });
+        });
+        
+        htmlContent += `
+            </tbody>
+          </table>
+        `;
+      }
 
       container.innerHTML = htmlContent;
 
