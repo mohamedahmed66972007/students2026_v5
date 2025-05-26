@@ -32,6 +32,11 @@ function TimePicker({ value, onChange, placeholder }: { value: string; onChange:
       setHours(hour12.toString());
       setMinutes(m);
       setPeriod(periodValue);
+    } else {
+      // Reset to default values when no value
+      setHours('');
+      setMinutes('');
+      setPeriod('AM');
     }
   }, [value]);
 
@@ -56,9 +61,17 @@ function TimePicker({ value, onChange, placeholder }: { value: string; onChange:
     setStep('period');
   };
 
-  const handlePeriodSelect = (p: string) => {
-    setPeriod(p);
-    handleTimeComplete();
+  const handlePeriodSelect = (selectedPeriod: string) => {
+    setPeriod(selectedPeriod);
+    // Use the selected period directly instead of relying on state
+    let hour24 = parseInt(hours);
+    if (selectedPeriod === 'PM' && hour24 !== 12) hour24 += 12;
+    if (selectedPeriod === 'AM' && hour24 === 12) hour24 = 0;
+    
+    const timeValue = `${hour24.toString().padStart(2, '0')}:${minutes.padStart(2, '0')}`;
+    onChange(timeValue);
+    setIsOpen(false);
+    setStep('hours');
   };
 
   const formatDisplayTime = (value: string) => {
@@ -73,7 +86,7 @@ function TimePicker({ value, onChange, placeholder }: { value: string; onChange:
   const timeOptions = {
     hours: Array.from({ length: 12 }, (_, i) => (i + 1).toString()),
     minutes: Array.from({ length: 12 }, (_, i) => (i * 5).toString()),
-    periods: ['AM', 'PM']
+    periods: ['AM (صباحا)', 'PM (مساء)']
   };
 
   return (
