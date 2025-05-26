@@ -20,6 +20,7 @@ function TimePicker({ value, onChange, placeholder }: { value: string; onChange:
   const [hours, setHours] = useState('');
   const [minutes, setMinutes] = useState('');
   const [period, setPeriod] = useState('AM');
+  const [step, setStep] = useState<'hours' | 'minutes' | 'period'>('hours');
 
   useEffect(() => {
     if (value) {
@@ -34,20 +35,30 @@ function TimePicker({ value, onChange, placeholder }: { value: string; onChange:
     }
   }, [value]);
 
-  const handleTimeSelect = (h: string, m: string, p: string) => {
-    let hour24 = parseInt(h);
-    if (p === 'PM' && hour24 !== 12) hour24 += 12;
-    if (p === 'AM' && hour24 === 12) hour24 = 0;
+  const handleTimeComplete = () => {
+    let hour24 = parseInt(hours);
+    if (period === 'PM' && hour24 !== 12) hour24 += 12;
+    if (period === 'AM' && hour24 === 12) hour24 = 0;
     
-    const timeValue = `${hour24.toString().padStart(2, '0')}:${m.padStart(2, '0')}`;
+    const timeValue = `${hour24.toString().padStart(2, '0')}:${minutes.padStart(2, '0')}`;
     onChange(timeValue);
     setIsOpen(false);
+    setStep('hours');
   };
 
-  const timeOptions = {
-    hours: Array.from({ length: 12 }, (_, i) => (i + 1).toString()),
-    minutes: Array.from({ length: 60 }, (_, i) => i.toString()),
-    periods: ['AM', 'PM']
+  const handleHourSelect = (hour: string) => {
+    setHours(hour);
+    setStep('minutes');
+  };
+
+  const handleMinuteSelect = (minute: string) => {
+    setMinutes(minute);
+    setStep('period');
+  };
+
+  const handlePeriodSelect = (p: string) => {
+    setPeriod(p);
+    handleTimeComplete();
   };
 
   const formatDisplayTime = (value: string) => {
@@ -59,8 +70,17 @@ function TimePicker({ value, onChange, placeholder }: { value: string; onChange:
     return `${hour12}:${m} ${periodValue}`;
   };
 
+  const timeOptions = {
+    hours: Array.from({ length: 12 }, (_, i) => (i + 1).toString()),
+    minutes: Array.from({ length: 12 }, (_, i) => (i * 5).toString()),
+    periods: ['AM', 'PM']
+  };
+
   return (
-    <Popover open={isOpen} onOpenChange={setIsOpen}>
+    <Popover open={isOpen} onOpenChange={(open) => {
+      setIsOpen(open);
+      if (!open) setStep('hours');
+    }}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
@@ -75,17 +95,16 @@ function TimePicker({ value, onChange, placeholder }: { value: string; onChange:
       </PopoverTrigger>
       <PopoverContent className="w-80 p-0" align="start">
         <div className="p-4 bg-background border rounded-lg shadow-lg">
-          <div className="text-center mb-4 font-medium">اختيار الوقت</div>
-          <div className="grid grid-cols-3 gap-4 mb-4">
-            <div>
-              <Label className="text-sm font-medium mb-2 block">الساعة</Label>
-              <div className="max-h-32 overflow-y-auto border rounded-md">
+          {step === 'hours' && (
+            <>
+              <div className="text-center mb-4 font-medium">اختر الساعة</div>
+              <div className="grid grid-cols-4 gap-2 mb-4">
                 {timeOptions.hours.map((hour) => (
                   <button
                     key={hour}
-                    onClick={() => setHours(hour)}
+                    onClick={() => handleHourSelect(hour)}
                     className={cn(
-                      "w-full p-2 text-center hover:bg-accent transition-colors",
+                      "p-3 text-center hover:bg-accent transition-colors border rounded-md",
                       hours === hour && "bg-primary text-primary-foreground"
                     )}
                   >
@@ -93,16 +112,19 @@ function TimePicker({ value, onChange, placeholder }: { value: string; onChange:
                   </button>
                 ))}
               </div>
-            </div>
-            <div>
-              <Label className="text-sm font-medium mb-2 block">الدقيقة</Label>
-              <div className="max-h-32 overflow-y-auto border rounded-md">
-                {timeOptions.minutes.filter((_, i) => i % 5 === 0).map((minute) => (
+            </>
+          )}
+
+          {step === 'minutes' && (
+            <>
+              <div className="text-center mb-4 font-medium">اختر الدقائق</div>
+              <div className="grid grid-cols-4 gap-2 mb-4">
+                {timeOptions.minutes.map((minute) => (
                   <button
                     key={minute}
-                    onClick={() => setMinutes(minute)}
+                    onClick={() => handleMinuteSelect(minute)}
                     className={cn(
-                      "w-full p-2 text-center hover:bg-accent transition-colors",
+                      "p-3 text-center hover:bg-accent transition-colors border rounded-md",
                       minutes === minute && "bg-primary text-primary-foreground"
                     )}
                   >
@@ -110,16 +132,19 @@ function TimePicker({ value, onChange, placeholder }: { value: string; onChange:
                   </button>
                 ))}
               </div>
-            </div>
-            <div>
-              <Label className="text-sm font-medium mb-2 block">الفترة</Label>
-              <div className="space-y-1">
+            </>
+          )}
+
+          {step === 'period' && (
+            <>
+              <div className="text-center mb-4 font-medium">اختر الفترة</div>
+              <div className="grid grid-cols-2 gap-2 mb-4">
                 {timeOptions.periods.map((p) => (
                   <button
                     key={p}
-                    onClick={() => setPeriod(p)}
+                    onClick={() => handlePeriodSelect(p)}
                     className={cn(
-                      "w-full p-2 text-center hover:bg-accent transition-colors border rounded-md",
+                      "p-3 text-center hover:bg-accent transition-colors border rounded-md",
                       period === p && "bg-primary text-primary-foreground"
                     )}
                   >
@@ -127,20 +152,33 @@ function TimePicker({ value, onChange, placeholder }: { value: string; onChange:
                   </button>
                 ))}
               </div>
+            </>
+          )}
+
+          {step !== 'hours' && (
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  if (step === 'minutes') setStep('hours');
+                  else if (step === 'period') setStep('minutes');
+                }}
+                className="flex-1"
+              >
+                السابق
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setIsOpen(false);
+                  setStep('hours');
+                }}
+                className="flex-1"
+              >
+                إلغاء
+              </Button>
             </div>
-          </div>
-          <div className="flex gap-2">
-            <Button 
-              onClick={() => handleTimeSelect(hours, minutes, period)}
-              disabled={!hours || !minutes}
-              className="flex-1"
-            >
-              تأكيد
-            </Button>
-            <Button variant="outline" onClick={() => setIsOpen(false)} className="flex-1">
-              إلغاء
-            </Button>
-          </div>
+          )}
         </div>
       </PopoverContent>
     </Popover>
